@@ -28,15 +28,18 @@ function super_privacy_content_filter($content) {
   $post_id = $post->ID;
   $source_url = get_permalink($post_id);
   $warning_flag = '';
+  $user = wp_get_current_user();
   if (get_acf_privacy_level($post_id)){
-	  $ability = get_acf_privacy_level($post_id);
-	  if (current_user_can($ability) && is_user_logged_in()){
+	  $allowed_roles = array_map('strtolower', get_acf_privacy_level($post_id));//array_map('strtolower', $yourArray);
+	  //var_dump($ability);
+	  $ability = 'foo';	  	
+	  if (array_intersect($allowed_roles, $user->roles ) && is_user_logged_in()){
 	  	  if (current_user_can('editor')){
-	  	  	$warning_flag = '<div id="access-flag"><span class="access-title">Notice: </span>This content is restricted to those with '. $ability .' rights or higher. This message only appears for those who can edit this content. </div>';
+	  	  	$warning_flag = '<div id="access-flag"><span class="access-title">Notice: </span>The content below is restricted to those with '. $ability .' rights or higher. This message only appears for those who can edit this content. </div>';	  	  
 	  	  }
 		  return $warning_flag . $content;
 		} 
-		else if (!current_user_can($ability) && is_user_logged_in()) {
+		else if (!array_intersect($allowed_roles, $user->roles ) && is_user_logged_in()) {
 			return 'Your access to this content is restricted. You need ' . $ability . ' permission to see this content.';
 		} else if (!is_user_logged_in()){
 			return 'Please <a href="' . wp_login_url() . '?orgin=' . $source_url .'" title="Login">login</a> to see if you have access to this content.';
@@ -114,6 +117,7 @@ function populate_user_levels( $field )
 	$field['privacy_settings'] = array();
 	
 	global $wp_roles;
+	//print("<pre>".print_r($wp_roles,true)."</pre>"); 
 	$roles = $wp_roles->get_names();
 	foreach ($roles as $role) {
 		$field['choices'][ $role ] = $role;

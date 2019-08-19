@@ -6,8 +6,8 @@
             "key": "field_5d5aab514ba49",
             "label": "Privacy Settings",
             "name": "privacy_settings",
-            "type": "select",
-            "instructions": "Choose how you'd like to restrict viewing below.",
+            "type": "checkbox",
+            "instructions": "Choose the users levels you'd like to be able to see this content.",
             "required": 0,
             "conditional_logic": 0,
             "wrapper": {
@@ -15,22 +15,21 @@
                 "class": "",
                 "id": ""
             },
-            "choices": [],
-            "default_value": [],
-            "allow_null": 0,
-            "multiple": 0,
-            "ui": 0,
-            "return_format": "value",
-            "ajax": 0,
-            "placeholder": "",
-            "privacy_settings": {
+            "choices": {
                 "Administrator": "Administrator",
                 "Editor": "Editor",
                 "Author": "Author",
                 "Contributor": "Contributor",
                 "Subscriber": "Subscriber",
                 "Group Leader": "Group Leader"
-            }
+            },
+            "allow_custom": 0,
+            "default_value": [],
+            "layout": "vertical",
+            "toggle": 0,
+            "return_format": "value",
+            "save_custom": 0,
+            "privacy_settings": []
         }
     ],
     "location": [
@@ -57,5 +56,5 @@
     "hide_on_screen": "",
     "active": 1,
     "description": "",
-    "modified": 1566227383
+    "modified": 1566235436
 }
