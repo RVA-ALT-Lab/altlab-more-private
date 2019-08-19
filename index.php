@@ -30,19 +30,18 @@ function super_privacy_content_filter($content) {
   $warning_flag = '';
   $user = wp_get_current_user();
   if (get_acf_privacy_level($post_id)){
-	  $allowed_roles = array_map('strtolower', get_acf_privacy_level($post_id));//array_map('strtolower', $yourArray);
-	  //var_dump($ability);
-	  $ability = 'foo';	  	
+	  $allowed_roles = array_map('strtolower', get_acf_privacy_level($post_id));
+	  $ability = implode(", ", $allowed_roles);
 	  if (array_intersect($allowed_roles, $user->roles ) && is_user_logged_in()){
 	  	  if (current_user_can('editor')){
-	  	  	$warning_flag = '<div id="access-flag"><span class="access-title">Notice: </span>The content below is restricted to those with '. $ability .' rights or higher. This message only appears for those who can edit this content. </div>';	  	  
+	  	  	$warning_flag = '<div id="access-flag">The content below is restricted to the following roles: '. $ability .'. <br>This message only appears for those who can edit this content. </div>';	  	  
 	  	  }
 		  return $warning_flag . $content;
 		} 
 		else if (!array_intersect($allowed_roles, $user->roles ) && is_user_logged_in()) {
-			return 'Your access to this content is restricted. You need ' . $ability . ' permission to see this content.';
+			return 'Your access to this content is restricted. You need to be one of the following roles to see this content.<p class="ok-roles"><strong>Roles:</strong> ' . $ability . '</p>' ;
 		} else if (!is_user_logged_in()){
-			return 'Please <a href="' . wp_login_url() . '?orgin=' . $source_url .'" title="Login">login</a> to see if you have access to this content.';
+			return 'Please <a href="' . wp_login_url() . '?origin=' . $source_url .'" title="Login">login</a> to see if you have access to this content.';
 		}
 	} else {
 		return $content;
@@ -58,9 +57,39 @@ function get_acf_privacy_level($post_id){
 }
 
 
+//clean RSS feed
+function cleanse_feed_content($content) {
+	global $post;
+  	$post_id = $post->ID;
+	if(count(get_acf_privacy_level($post_id))>0) {
+		return 'Content is restricted. You need to go to the site and login.';
+	} else {
+		return $content;
+	}
+}
+ add_filter( 'the_content_feed', 'cleanse_feed_content');
+ add_filter( 'the_excerpt_rss', 'cleanse_feed_content');
+
+
+
+//CLEAN JSON 
+
+function cleanse_json_content($response, $post, $request) {
+ 	global $post;
+  	$post_id = $post->ID;
+  	$restricted = 'Content is restricted. You need to go to the site and login.';
+    if (count(get_acf_privacy_level($post_id))>0) {       
+        $response->data['content']['rendered'] = $restricted;
+        $response->data['excerpt']['rendered'] = $restricted;
+    }
+    return $response;
+}
+add_filter('rest_prepare_post', 'cleanse_json_content', 10, 3);
+
+
 //LOGIN REDIRECT TO ORIGIN PAGE
 function acf_security_login_redirect( $redirect_to, $request, $user ) {
-    $source_url = $_GET["orgin"];
+    $source_url = $_GET["origin"];
     if ($source_url != false) {      
             $redirect_to =  $source_url;
             return $redirect_to;
