@@ -71,7 +71,6 @@ function cleanse_feed_content($content) {
  add_filter( 'the_excerpt_rss', 'cleanse_feed_content');
 
 
-
 //CLEAN JSON 
 
 function cleanse_json_content($response, $post, $request) {

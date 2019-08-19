@@ -7,7 +7,7 @@
             "label": "Privacy Settings",
             "name": "privacy_settings",
             "type": "checkbox",
-            "instructions": "Choose the users levels you'd like to be able to see this content.",
+            "instructions": "Choose the user levels you'd like to be able to see this content.",
             "required": 0,
             "conditional_logic": 0,
             "wrapper": {
@@ -56,5 +56,5 @@
     "hide_on_screen": "",
     "active": 1,
     "description": "",
-    "modified": 1566235436
+    "modified": 1566240272
 }
