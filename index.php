@@ -88,13 +88,15 @@ add_filter('rest_prepare_post', 'cleanse_json_content', 10, 3);
 
 //LOGIN REDIRECT TO ORIGIN PAGE WHERE YOU COULDN'T SEE STUFF 
 function acf_security_login_redirect( $redirect_to, $request, $user ) {
-    $source_url = $_GET["origin"];
-    if ($source_url != false) {      
-            $redirect_to =  $source_url;
-            return $redirect_to;
-        } else {
-        	return $redirect_to;
-        }
+    if (isset($_GET["origin"])){
+	    	$source_url = $_GET["origin"];
+	    if ($source_url != false) {      
+	            $redirect_to =  $source_url;
+	            return $redirect_to;
+	        } else {
+	        	return $redirect_to;
+	        }
+	     }
  }
 
 add_filter( 'login_redirect', 'acf_security_login_redirect', 10, 3 );
@@ -122,8 +124,7 @@ add_filter('acf/settings/load_json', 'my_acf_json_load_point');
 function my_acf_json_load_point( $paths ) {
     
     // remove original path (optional)
-    unset($paths[0]);
-    
+    unset($paths[0]);    
     
     // append path
     $paths[] = plugin_dir_path( __FILE__ ) . '/acf-json';
@@ -153,4 +154,14 @@ function populate_user_levels( $field )
 	}
 
 	return $field;
+}
+
+
+//hide acf from non super admins 
+add_filter('acf/settings/show_admin', 'only_super_admin_see_acf');
+
+function only_super_admin_see_acf( $show ) {
+    
+    return is_super_admin( get_current_user_id() );
+    
 }
