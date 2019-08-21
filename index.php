@@ -22,7 +22,7 @@ function acf_security_load_scripts() {
 
 
 
-//filter content for non admins
+//filter content
 function super_privacy_content_filter($content) {
   global $post;
   $post_id = $post->ID;
@@ -32,7 +32,7 @@ function super_privacy_content_filter($content) {
   if (get_acf_privacy_level($post_id)){
 	  $allowed_roles = array_map('strtolower', get_acf_privacy_level($post_id));
 	  $ability = implode(", ", $allowed_roles);
-	  if (array_intersect($allowed_roles, $user->roles ) && is_user_logged_in()){
+	  if (array_intersect($allowed_roles, $user->roles ) && is_user_logged_in() && current_user_can( 'edit', $post_id )){
 	  	  if (current_user_can('editor')){
 	  	  	$warning_flag = '<div id="access-flag">The content below is restricted to the following roles: '. $ability .'. <br>This message only appears for those who can edit this content. </div>';	  	  
 	  	  }
@@ -86,7 +86,7 @@ function cleanse_json_content($response, $post, $request) {
 add_filter('rest_prepare_post', 'cleanse_json_content', 10, 3);
 
 
-//LOGIN REDIRECT TO ORIGIN PAGE
+//LOGIN REDIRECT TO ORIGIN PAGE WHERE YOU COULDN'T SEE STUFF 
 function acf_security_login_redirect( $redirect_to, $request, $user ) {
     $source_url = $_GET["origin"];
     if ($source_url != false) {      
@@ -97,12 +97,14 @@ function acf_security_login_redirect( $redirect_to, $request, $user ) {
         }
  }
 
-
 add_filter( 'login_redirect', 'acf_security_login_redirect', 10, 3 );
 
 
 
 //ACF STUFF
+
+
+//save json data
 
 add_filter('acf/settings/save_json', 'save_acf_files_here');
  
@@ -110,8 +112,6 @@ function save_acf_files_here( $path ) {
     
     // update path
     $path = plugin_dir_path( __FILE__ ) . '/acf-json';
-    
-    
     // return
     return $path;
     
@@ -128,11 +128,12 @@ function my_acf_json_load_point( $paths ) {
     // append path
     $paths[] = plugin_dir_path( __FILE__ ) . '/acf-json';
     
-    
     // return
     return $paths;
     
 }
+
+
 
 
 add_filter('acf/load_field/name=privacy_settings', 'populate_user_levels');
