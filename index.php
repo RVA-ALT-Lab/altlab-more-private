@@ -80,7 +80,7 @@ function cleanse_json_content($response, $post, $request) {
  	global $post;
   	$post_id = $post->ID;
   	$restricted = 'Content is restricted. You need to go to the site and login.';
-    if (count(get_acf_privacy_level($post_id))>0 && get_acf_privacy_level($post_id) != 'Public')) {       
+    if (count(get_acf_privacy_level($post_id))>0 && get_acf_privacy_level($post_id) != 'Public') {       
         $response->data['content']['rendered'] = $restricted;
         $response->data['excerpt']['rendered'] = $restricted;
     }
