@@ -32,10 +32,12 @@ function super_privacy_content_filter($content) {
   if (get_acf_privacy_level($post_id)){
 	  $allowed_roles = array_map('strtolower', get_acf_privacy_level($post_id));
 	  $ability = implode(", ", $allowed_roles);
-	  if (get_acf_privacy_level($post_id) === 'Public') {
-			return $content;
-		}
-	  if (array_intersect($allowed_roles, $user->roles ) && is_user_logged_in() && current_user_can( 'edit', $post_id )){
+	  //if it has public just show it
+	  if (array_intersect($allowed_roles, ['public'] )) {
+	  	return $content;
+	  }
+	  //not public do the following checks
+	  if (array_intersect($allowed_roles, $user->roles ) && is_user_logged_in() && current_user_can( 'edit', $post_id ) || is_super_admin(get_current_user_id())){
 	  	  if (current_user_can('editor')){
 	  	  	$warning_flag = '<div id="access-flag">The content below is restricted to the following roles: '. $ability .'. <br>This message only appears for those who can edit this content. </div>';	  	  
 	  	  }
@@ -43,10 +45,11 @@ function super_privacy_content_filter($content) {
 		} 
 		else if (!array_intersect($allowed_roles, $user->roles ) && is_user_logged_in()) {
 			return 'Your access to this content is restricted. You need to be one of the following roles to see this content.<p class="ok-roles"><strong>Roles:</strong> ' . $ability . '</p>' ;
-		} else if (!is_user_logged_in() && get_acf_privacy_level($post_id) != 'Public'){
+		} else if (!is_user_logged_in() && !array_intersect($allowed_roles, ['public'] )){
 			return 'Please <a href="' . wp_login_url() . '?origin=' . $source_url .'" title="Login">login</a> to see if you have access to this content.';
 		}
-	} else {
+	}  else if (array_intersect($allowed_roles, $user->roles ) && is_user_logged_in())
+	{
 		return $content;
 	}
 
@@ -64,7 +67,7 @@ function get_acf_privacy_level($post_id){
 function cleanse_feed_content($content) {
 	global $post;
   	$post_id = $post->ID;
-	if(count(get_acf_privacy_level($post_id))>0 && get_acf_privacy_level($post_id) != 'Public') {
+	if(count(get_acf_privacy_level($post_id))>0) {
 		return 'Content is restricted. You need to go to the site and login.';
 	} else {
 		return $content;
@@ -80,7 +83,7 @@ function cleanse_json_content($response, $post, $request) {
  	global $post;
   	$post_id = $post->ID;
   	$restricted = 'Content is restricted. You need to go to the site and login.';
-    if (count(get_acf_privacy_level($post_id))>0 && get_acf_privacy_level($post_id) != 'Public') {       
+    if (count(get_acf_privacy_level($post_id))>0) {       
         $response->data['content']['rendered'] = $restricted;
         $response->data['excerpt']['rendered'] = $restricted;
     }
@@ -91,15 +94,13 @@ add_filter('rest_prepare_post', 'cleanse_json_content', 10, 3);
 
 //LOGIN REDIRECT TO ORIGIN PAGE WHERE YOU COULDN'T SEE STUFF 
 function acf_security_login_redirect( $redirect_to, $request, $user ) {
-    if (isset($_GET["origin"])){
-	    	$source_url = $_GET["origin"];
-	    if ($source_url != false) {      
-	            $redirect_to =  $source_url;
-	            return $redirect_to;
-	        } else {
-	        	return $redirect_to;
-	        }
-	     }
+    $source_url = $_GET["origin"];
+    if ($source_url != false) {      
+            $redirect_to =  $source_url;
+            return $redirect_to;
+        } else {
+        	return $redirect_to;
+        }
  }
 
 add_filter( 'login_redirect', 'acf_security_login_redirect', 10, 3 );
@@ -127,7 +128,8 @@ add_filter('acf/settings/load_json', 'my_acf_json_load_point');
 function my_acf_json_load_point( $paths ) {
     
     // remove original path (optional)
-    unset($paths[0]);    
+    unset($paths[0]);
+    
     
     // append path
     $paths[] = plugin_dir_path( __FILE__ ) . '/acf-json';
@@ -152,20 +154,10 @@ function populate_user_levels( $field )
 	global $wp_roles;
 	//print("<pre>".print_r($wp_roles,true)."</pre>"); 
 	$roles = $wp_roles->get_names();
+	array_push($roles, 'Public');
 	foreach ($roles as $role) {
 		$field['choices'][ $role ] = $role;
 	}
-	$field['choices'][ 'Public' ] = 'Public';
 
 	return $field;
-}
-
-
-//hide acf from non super admins 
-add_filter('acf/settings/show_admin', 'only_super_admin_see_acf');
-
-function only_super_admin_see_acf( $show ) {
-    
-    return is_super_admin( get_current_user_id() );
-    
 }
