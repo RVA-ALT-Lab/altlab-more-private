@@ -33,7 +33,7 @@ function super_privacy_content_filter($content) {
 	  $allowed_roles = array_map('strtolower', get_acf_privacy_level($post_id));
 	  $ability = implode(", ", $allowed_roles);
 	  //if it has public just show it
-	  if (array_intersect($allowed_roles, ['public'] )) {
+	  if (array_intersect($allowed_roles, ['public'] ) || array_intersect($allowed_roles, $user->roles )) {
 	  	return $content;
 	  }
 	  //not public do the following checks
